@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,7 +9,12 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         /* ========== Reset & Base ========== */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background: #0f0f23;
@@ -27,7 +33,7 @@
             max-height: 900px;
             background: #1a1a2e;
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -46,6 +52,7 @@
             border-bottom: 1px solid #2a2a4a;
             flex-shrink: 0;
         }
+
         .chat-header h1 {
             font-size: 20px;
             font-weight: 700;
@@ -54,6 +61,7 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
+
         .chat-header .online-count {
             font-size: 13px;
             color: #8a8aaa;
@@ -61,6 +69,7 @@
             padding: 4px 12px;
             border-radius: 20px;
         }
+
         .chat-header .online-count span {
             color: #4ade80;
             font-weight: 600;
@@ -76,9 +85,19 @@
             gap: 12px;
             background: #1a1a2e;
         }
-        .messages::-webkit-scrollbar { width: 6px; }
-        .messages::-webkit-scrollbar-track { background: transparent; }
-        .messages::-webkit-scrollbar-thumb { background: #3a3a5a; border-radius: 3px; }
+
+        .messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .messages::-webkit-scrollbar-thumb {
+            background: #3a3a5a;
+            border-radius: 3px;
+        }
 
         /* ========== Message Bubbles ========== */
         .message {
@@ -87,13 +106,33 @@
             max-width: 80%;
             animation: fadeIn 0.3s ease;
         }
-        .message.self { align-self: flex-end; align-items: flex-end; }
-        .message.other { align-self: flex-start; align-items: flex-start; }
-        .message.system { align-self: center; align-items: center; max-width: 90%; }
+
+        .message.self {
+            align-self: flex-end;
+            align-items: flex-end;
+        }
+
+        .message.other {
+            align-self: flex-start;
+            align-items: flex-start;
+        }
+
+        .message.system {
+            align-self: center;
+            align-items: center;
+            max-width: 90%;
+        }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to   { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .message .sender {
@@ -102,7 +141,10 @@
             margin-bottom: 4px;
             font-weight: 500;
         }
-        .message.self .sender { color: #e94560; }
+
+        .message.self .sender {
+            color: #e94560;
+        }
 
         .message .bubble {
             padding: 10px 16px;
@@ -112,31 +154,38 @@
             word-break: break-word;
             position: relative;
         }
+
         .message.self .bubble {
             background: linear-gradient(135deg, #e94560, #c23152);
             color: #fff;
             border-bottom-right-radius: 4px;
         }
+
         .message.other .bubble {
             background: #2a2a4a;
             color: #e0e0e0;
             border-bottom-left-radius: 4px;
         }
+
         .message.system .bubble {
-            background: rgba(233,69,96,0.15);
+            background: rgba(233, 69, 96, 0.15);
             color: #8a8aaa;
             font-size: 13px;
             padding: 6px 16px;
             border-radius: 20px;
-            border: 1px solid rgba(233,69,96,0.2);
+            border: 1px solid rgba(233, 69, 96, 0.2);
         }
+
         .message .bubble .time {
             font-size: 11px;
-            color: rgba(255,255,255,0.5);
+            color: rgba(255, 255, 255, 0.5);
             margin-top: 4px;
             text-align: right;
         }
-        .message.other .bubble .time { color: rgba(255,255,255,0.35); }
+
+        .message.other .bubble .time {
+            color: rgba(255, 255, 255, 0.35);
+        }
 
         /* ========== Connection Status ========== */
         .connection-status {
@@ -146,9 +195,21 @@
             flex-shrink: 0;
             transition: all 0.3s;
         }
-        .connection-status.connected { background: rgba(74,222,128,0.1); color: #4ade80; }
-        .connection-status.disconnected { background: rgba(255,107,107,0.1); color: #ff6b6b; }
-        .connection-status.connecting { background: rgba(255,193,7,0.1); color: #ffc107; }
+
+        .connection-status.connected {
+            background: rgba(74, 222, 128, 0.1);
+            color: #4ade80;
+        }
+
+        .connection-status.disconnected {
+            background: rgba(255, 107, 107, 0.1);
+            color: #ff6b6b;
+        }
+
+        .connection-status.connecting {
+            background: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
+        }
 
         /* ========== Input Area ========== */
         .input-area {
@@ -160,6 +221,7 @@
             align-items: center;
             flex-shrink: 0;
         }
+
         .input-area input[type="text"] {
             flex: 1;
             padding: 12px 18px;
@@ -171,8 +233,15 @@
             outline: none;
             transition: border 0.2s;
         }
-        .input-area input[type="text"]:focus { border-color: #e94560; }
-        .input-area input[type="text"]::placeholder { color: #6a6a8a; }
+
+        .input-area input[type="text"]:focus {
+            border-color: #e94560;
+        }
+
+        .input-area input[type="text"]::placeholder {
+            color: #6a6a8a;
+        }
+
         .input-area button {
             background: linear-gradient(135deg, #e94560, #c23152);
             color: #fff;
@@ -188,11 +257,16 @@
             justify-content: center;
             flex-shrink: 0;
         }
+
         .input-area button:hover {
             transform: scale(1.05);
-            box-shadow: 0 4px 20px rgba(233,69,96,0.4);
+            box-shadow: 0 4px 20px rgba(233, 69, 96, 0.4);
         }
-        .input-area button:active { transform: scale(0.95); }
+
+        .input-area button:active {
+            transform: scale(0.95);
+        }
+
         .input-area button:disabled {
             opacity: 0.4;
             cursor: not-allowed;
@@ -204,7 +278,7 @@
         .login-overlay {
             position: absolute;
             inset: 0;
-            background: rgba(15,15,35,0.92);
+            background: rgba(15, 15, 35, 0.92);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -212,16 +286,18 @@
             backdrop-filter: blur(4px);
             border-radius: 20px;
         }
+
         .login-box {
             background: #1a1a2e;
             padding: 40px;
             border-radius: 20px;
             border: 1px solid #2a2a4a;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
             width: 90%;
             max-width: 380px;
             text-align: center;
         }
+
         .login-box h2 {
             font-size: 28px;
             margin-bottom: 8px;
@@ -230,11 +306,13 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
+
         .login-box p {
             color: #8a8aaa;
             margin-bottom: 24px;
             font-size: 14px;
         }
+
         .login-box input {
             width: 100%;
             padding: 14px 18px;
@@ -247,7 +325,11 @@
             margin-bottom: 16px;
             transition: border 0.2s;
         }
-        .login-box input:focus { border-color: #e94560; }
+
+        .login-box input:focus {
+            border-color: #e94560;
+        }
+
         .login-box .login-btn {
             width: 100%;
             padding: 14px;
@@ -260,333 +342,356 @@
             cursor: pointer;
             transition: transform 0.15s, box-shadow 0.15s;
         }
+
         .login-box .login-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(233,69,96,0.4);
+            box-shadow: 0 8px 30px rgba(233, 69, 96, 0.4);
         }
 
         /* ========== Responsive ========== */
         @media (max-width: 600px) {
-            .chat-container { margin: 0; border-radius: 0; max-height: 100vh; height: 100vh; }
-            .login-overlay { border-radius: 0; }
-            .chat-header { padding: 14px 16px; }
-            .messages { padding: 12px; }
-            .input-area { padding: 12px 16px; }
-            .message { max-width: 90%; }
+            .chat-container {
+                margin: 0;
+                border-radius: 0;
+                max-height: 100vh;
+                height: 100vh;
+            }
+
+            .login-overlay {
+                border-radius: 0;
+            }
+
+            .chat-header {
+                padding: 14px 16px;
+            }
+
+            .messages {
+                padding: 12px;
+            }
+
+            .input-area {
+                padding: 12px 16px;
+            }
+
+            .message {
+                max-width: 90%;
+            }
         }
     </style>
 </head>
+
 <body>
 
-<div class="chat-container" id="app">
-    <!-- Login Overlay -->
-    <div class="login-overlay" id="loginOverlay">
-        <div class="login-box">
-            <h2>💬 ChijiChat</h2>
-            <p>输入昵称加入聊天室</p>
-            <input type="text" id="usernameInput" placeholder="你的昵称..." maxlength="20" autofocus />
-            <button class="login-btn" id="loginBtn">进入聊天室</button>
+    <div class="chat-container" id="app">
+        <!-- Login Overlay -->
+        <div class="login-overlay" id="loginOverlay">
+            <div class="login-box">
+                <h2>💬 ChijiChat</h2>
+                <p>输入昵称加入聊天室</p>
+                <input type="text" id="usernameInput" placeholder="你的昵称..." maxlength="20" autofocus />
+                <button class="login-btn" id="loginBtn">进入聊天室</button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="chat-header">
+            <h1>💬 ChijiChat</h1>
+            <div class="online-count">👤 在线: <span id="onlineCount">0</span></div>
+        </div>
+
+        <!-- Connection Status -->
+        <div class="connection-status connecting" id="connectionStatus">🔄 正在连接...</div>
+
+        <!-- Messages -->
+        <div class="messages" id="messages"></div>
+
+        <!-- Input Area -->
+        <div class="input-area">
+            <input type="text" id="messageInput" placeholder="输入消息..." disabled />
+            <button id="sendBtn" disabled>➤</button>
         </div>
     </div>
 
-    <!-- Header -->
-    <div class="chat-header">
-        <h1>💬 ChijiChat</h1>
-        <div class="online-count">👤 在线: <span id="onlineCount">0</span></div>
-    </div>
+    <script>
+        // ====================================================================
+        // 🚀 使用 Supabase 作为纯静态聊天室后端
+        //
+        // 部署前必须完成以下步骤:
+        // 1. 在 https://supabase.com 创建项目
+        // 2. 在 SQL Editor 中运行下方 SQL 创建表
+        // 3. 将 SUPABASE_URL 和 SUPABASE_ANON_KEY 替换为你的项目值
+        // ====================================================================
 
-    <!-- Connection Status -->
-    <div class="connection-status connecting" id="connectionStatus">🔄 正在连接...</div>
+        // ========== Supabase 配置 ==========
+        // ⚠️ 替换为你的 Supabase 项目信息!
+        const SUPABASE_URL = 'https://vmhgtscgmidoctmagyup.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_XoICZcNrmikaX2QQemfGHg_ECdSh38n';
 
-    <!-- Messages -->
-    <div class="messages" id="messages"></div>
-
-    <!-- Input Area -->
-    <div class="input-area">
-        <input type="text" id="messageInput" placeholder="输入消息..." disabled />
-        <button id="sendBtn" disabled>➤</button>
-    </div>
-</div>
-
-<script>
-    // ====================================================================
-    // 🚀 使用 Supabase 作为纯静态聊天室后端
-    //
-    // 部署前必须完成以下步骤:
-    // 1. 在 https://supabase.com 创建项目
-    // 2. 在 SQL Editor 中运行下方 SQL 创建表
-    // 3. 将 SUPABASE_URL 和 SUPABASE_ANON_KEY 替换为你的项目值
-    // ====================================================================
-
-    // ========== Supabase 配置 ==========
-    // ⚠️ 替换为你的 Supabase 项目信息!
-    const SUPABASE_URL = 'https://your-project.supabase.co';
-    const SUPABASE_ANON_KEY = 'your-anon-key';
-
-    // ========== 初始化 Supabase ==========
-    const { createClient } = supabase;
-    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        realtime: {
-            params: {
-                eventsPerSecond: 10,
-            },
-        },
-    });
-
-    // ========== State ==========
-    let username = '';
-    let isSubscribed = false;
-    let presenceChannel = null;
-
-    // ========== DOM ==========
-    const loginOverlay   = document.getElementById('loginOverlay');
-    const usernameInput  = document.getElementById('usernameInput');
-    const loginBtn       = document.getElementById('loginBtn');
-    const messagesEl     = document.getElementById('messages');
-    const messageInput   = document.getElementById('messageInput');
-    const sendBtn        = document.getElementById('sendBtn');
-    const onlineCount    = document.getElementById('onlineCount');
-    const connectionStatus = document.getElementById('connectionStatus');
-
-    // ========== Login ==========
-    loginBtn.addEventListener('click', enterChat);
-    usernameInput.addEventListener('keydown', e => { if (e.key === 'Enter') enterChat(); });
-
-    function enterChat() {
-        const name = usernameInput.value.trim();
-        if (!name) return;
-        username = name;
-        loginOverlay.style.display = 'none';
-        initChat();
-    }
-
-    // ========== 初始化聊天 ==========
-    async function initChat() {
-        setStatus('connecting', '🔄 正在连接...');
-
-        // 1. 加载历史消息
-        await loadHistory();
-
-        // 2. 订阅实时消息
-        subscribeMessages();
-
-        // 3. 设置在线状态
-        setupPresence();
-
-        setStatus('connected', '✅ 已连接');
-        messageInput.disabled = false;
-        sendBtn.disabled = false;
-        messageInput.focus();
-    }
-
-    // ========== 加载历史消息 ==========
-    async function loadHistory() {
-        try {
-            const { data, error } = await supabaseClient
-                .from('messages')
-                .select('*')
-                .order('created_at', { ascending: true })
-                .limit(100);
-
-            if (error) {
-                console.error('加载历史消息失败:', error);
-                appendSystemMessage('⚠️ 无法加载消息历史: ' + error.message);
-                return;
-            }
-
-            if (data && data.length > 0) {
-                data.forEach(msg => {
-                    if (msg.type === 'system') {
-                        appendSystemMessage(msg.text);
-                    } else {
-                        appendMessage(msg.username, msg.text, msg.created_at, msg.username === username);
-                    }
-                });
-                scrollToBottom();
-            }
-        } catch (err) {
-            console.error('加载历史消息异常:', err);
-            appendSystemMessage('⚠️ 无法连接数据库，请检查 Supabase 配置');
-        }
-    }
-
-    // ========== 订阅实时消息 ==========
-    function subscribeMessages() {
-        if (isSubscribed) return;
-        isSubscribed = true;
-
-        supabaseClient
-            .channel('messages-channel')
-            .on('postgres_changes',
-                { event: 'INSERT', schema: 'public', table: 'messages' },
-                (payload) => {
-                    const msg = payload.new;
-                    if (msg.type === 'system') {
-                        appendSystemMessage(msg.text);
-                    } else {
-                        appendMessage(msg.username, msg.text, msg.created_at, msg.username === username);
-                    }
-                }
-            )
-            .subscribe((status) => {
-                if (status === 'SUBSCRIBED') {
-                    console.log('已订阅消息频道');
-                } else if (status === 'CHANNEL_ERROR') {
-                    setStatus('disconnected', '❌ 实时连接失败');
-                }
-            });
-    }
-
-    // ========== 在线状态 ==========
-    function setupPresence() {
-        presenceChannel = supabaseClient.channel('presence-channel', {
-            config: {
-                presence: {
-                    key: username,
+        // ========== 初始化 Supabase ==========
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            realtime: {
+                params: {
+                    eventsPerSecond: 10,
                 },
             },
         });
 
-        presenceChannel
-            .on('presence', { event: 'sync' }, () => {
-                const state = presenceChannel.presenceState();
-                const count = Object.keys(state).length;
-                onlineCount.textContent = count;
-            })
-            .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-                // 不广播自己
-                if (key === username) return;
-                appendSystemMessage(`🎉 ${key} 加入了聊天室`);
-            })
-            .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
-                appendSystemMessage(`👋 ${key} 离开了聊天室`);
-            })
-            .subscribe(async (status) => {
-                if (status === 'SUBSCRIBED') {
-                    await presenceChannel.track({
-                        online_at: new Date().toISOString(),
-                        username: username,
-                    });
-                }
-            });
-    }
+        // ========== State ==========
+        let username = '';
+        let isSubscribed = false;
+        let presenceChannel = null;
 
-    // ========== 发送消息 ==========
-    sendBtn.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter') sendMessage();
-    });
+        // ========== DOM ==========
+        const loginOverlay = document.getElementById('loginOverlay');
+        const usernameInput = document.getElementById('usernameInput');
+        const loginBtn = document.getElementById('loginBtn');
+        const messagesEl = document.getElementById('messages');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const onlineCount = document.getElementById('onlineCount');
+        const connectionStatus = document.getElementById('connectionStatus');
 
-    async function sendMessage() {
-        const text = messageInput.value.trim();
-        if (!text || text.length > 500) return;
+        // ========== Login ==========
+        loginBtn.addEventListener('click', enterChat);
+        usernameInput.addEventListener('keydown', e => { if (e.key === 'Enter') enterChat(); });
 
-        try {
-            const { error } = await supabaseClient
-                .from('messages')
-                .insert({
-                    username: username,
-                    text: text,
-                    type: 'chat',
-                });
-
-            if (error) {
-                console.error('发送消息失败:', error);
-                appendSystemMessage('⚠️ 发送失败: ' + error.message);
-                return;
-            }
-
-            messageInput.value = '';
-            messageInput.focus();
-        } catch (err) {
-            console.error('发送消息异常:', err);
-            appendSystemMessage('⚠️ 发送失败，请检查网络');
+        function enterChat() {
+            const name = usernameInput.value.trim();
+            if (!name) return;
+            username = name;
+            loginOverlay.style.display = 'none';
+            initChat();
         }
-    }
 
-    // ========== UI 辅助函数 ==========
-    function setStatus(type, text) {
-        connectionStatus.className = 'connection-status ' + type;
-        connectionStatus.textContent = text;
-    }
+        // ========== 初始化聊天 ==========
+        async function initChat() {
+            setStatus('connecting', '🔄 正在连接...');
 
-    function appendMessage(sender, text, time, isSelf) {
-        const div = document.createElement('div');
-        div.className = `message ${isSelf ? 'self' : 'other'}`;
-        const timeStr = time
-            ? new Date(time).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-            : '';
-        div.innerHTML = `
+            // 1. 加载历史消息
+            await loadHistory();
+
+            // 2. 订阅实时消息
+            subscribeMessages();
+
+            // 3. 设置在线状态
+            setupPresence();
+
+            setStatus('connected', '✅ 已连接');
+            messageInput.disabled = false;
+            sendBtn.disabled = false;
+            messageInput.focus();
+        }
+
+        // ========== 加载历史消息 ==========
+        async function loadHistory() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('messages')
+                    .select('*')
+                    .order('created_at', { ascending: true })
+                    .limit(100);
+
+                if (error) {
+                    console.error('加载历史消息失败:', error);
+                    appendSystemMessage('⚠️ 无法加载消息历史: ' + error.message);
+                    return;
+                }
+
+                if (data && data.length > 0) {
+                    data.forEach(msg => {
+                        if (msg.type === 'system') {
+                            appendSystemMessage(msg.text);
+                        } else {
+                            appendMessage(msg.username, msg.text, msg.created_at, msg.username === username);
+                        }
+                    });
+                    scrollToBottom();
+                }
+            } catch (err) {
+                console.error('加载历史消息异常:', err);
+                appendSystemMessage('⚠️ 无法连接数据库，请检查 Supabase 配置');
+            }
+        }
+
+        // ========== 订阅实时消息 ==========
+        function subscribeMessages() {
+            if (isSubscribed) return;
+            isSubscribed = true;
+
+            supabaseClient
+                .channel('messages-channel')
+                .on('postgres_changes',
+                    { event: 'INSERT', schema: 'public', table: 'messages' },
+                    (payload) => {
+                        const msg = payload.new;
+                        if (msg.type === 'system') {
+                            appendSystemMessage(msg.text);
+                        } else {
+                            appendMessage(msg.username, msg.text, msg.created_at, msg.username === username);
+                        }
+                    }
+                )
+                .subscribe((status) => {
+                    if (status === 'SUBSCRIBED') {
+                        console.log('已订阅消息频道');
+                    } else if (status === 'CHANNEL_ERROR') {
+                        setStatus('disconnected', '❌ 实时连接失败');
+                    }
+                });
+        }
+
+        // ========== 在线状态 ==========
+        function setupPresence() {
+            presenceChannel = supabaseClient.channel('presence-channel', {
+                config: {
+                    presence: {
+                        key: username,
+                    },
+                },
+            });
+
+            presenceChannel
+                .on('presence', { event: 'sync' }, () => {
+                    const state = presenceChannel.presenceState();
+                    const count = Object.keys(state).length;
+                    onlineCount.textContent = count;
+                })
+                .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+                    // 不广播自己
+                    if (key === username) return;
+                    appendSystemMessage(`🎉 ${key} 加入了聊天室`);
+                })
+                .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+                    appendSystemMessage(`👋 ${key} 离开了聊天室`);
+                })
+                .subscribe(async (status) => {
+                    if (status === 'SUBSCRIBED') {
+                        await presenceChannel.track({
+                            online_at: new Date().toISOString(),
+                            username: username,
+                        });
+                    }
+                });
+        }
+
+        // ========== 发送消息 ==========
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        async function sendMessage() {
+            const text = messageInput.value.trim();
+            if (!text || text.length > 500) return;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('messages')
+                    .insert({
+                        username: username,
+                        text: text,
+                        type: 'chat',
+                    });
+
+                if (error) {
+                    console.error('发送消息失败:', error);
+                    appendSystemMessage('⚠️ 发送失败: ' + error.message);
+                    return;
+                }
+
+                messageInput.value = '';
+                messageInput.focus();
+            } catch (err) {
+                console.error('发送消息异常:', err);
+                appendSystemMessage('⚠️ 发送失败，请检查网络');
+            }
+        }
+
+        // ========== UI 辅助函数 ==========
+        function setStatus(type, text) {
+            connectionStatus.className = 'connection-status ' + type;
+            connectionStatus.textContent = text;
+        }
+
+        function appendMessage(sender, text, time, isSelf) {
+            const div = document.createElement('div');
+            div.className = `message ${isSelf ? 'self' : 'other'}`;
+            const timeStr = time
+                ? new Date(time).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+                : '';
+            div.innerHTML = `
             <div class="sender">${escapeHtml(sender)}</div>
             <div class="bubble">
                 ${escapeHtml(text)}
                 <div class="time">${timeStr}</div>
             </div>
         `;
-        messagesEl.appendChild(div);
-        scrollToBottom();
-    }
+            messagesEl.appendChild(div);
+            scrollToBottom();
+        }
 
-    function appendSystemMessage(text) {
-        const div = document.createElement('div');
-        div.className = 'message system';
-        div.innerHTML = `<div class="bubble">${escapeHtml(text)}</div>`;
-        messagesEl.appendChild(div);
-        scrollToBottom();
-    }
+        function appendSystemMessage(text) {
+            const div = document.createElement('div');
+            div.className = 'message system';
+            div.innerHTML = `<div class="bubble">${escapeHtml(text)}</div>`;
+            messagesEl.appendChild(div);
+            scrollToBottom();
+        }
 
-    function scrollToBottom() {
-        requestAnimationFrame(() => {
-            messagesEl.scrollTop = messagesEl.scrollHeight;
-        });
-    }
+        function scrollToBottom() {
+            requestAnimationFrame(() => {
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+            });
+        }
 
-    function escapeHtml(str) {
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-    }
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
 
-    // ========== 配置检查 ==========
-    // 如果用户未修改配置，在控制台输出提示
-    if (SUPABASE_URL.includes('your-project')) {
-        console.log(
-            '%c⚠️ ChijiChat 配置提醒',
-            'font-size:16px; font-weight:bold; color:#ffc107;'
+        // ========== 配置检查 ==========
+        // 如果用户未修改配置，在控制台输出提示
+        if (SUPABASE_URL.includes('your-project')) {
+            console.log(
+                '%c⚠️ ChijiChat 配置提醒',
+                'font-size:16px; font-weight:bold; color:#ffc107;'
+            );
+            console.log('请修改 index.html 中的 SUPABASE_URL 和 SUPABASE_ANON_KEY');
+            console.log('教程: https://github.com/chijichan/chijichan.github.io');
+        }
+
+        // ====================================================================
+        // 📦 Supabase 数据库设置
+        //
+        // 在 Supabase SQL Editor 中运行以下 SQL:
+        // ====================================================================
+        /*
+        -- 创建消息表
+        CREATE TABLE messages (
+            id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            username TEXT NOT NULL,
+            text TEXT NOT NULL,
+            type TEXT NOT NULL DEFAULT 'chat'
         );
-        console.log('请修改 index.html 中的 SUPABASE_URL 和 SUPABASE_ANON_KEY');
-        console.log('教程: https://github.com/chijichan/chijichan.github.io');
-    }
-
-    // ====================================================================
-    // 📦 Supabase 数据库设置
-    //
-    // 在 Supabase SQL Editor 中运行以下 SQL:
-    // ====================================================================
-    /*
-    -- 创建消息表
-    CREATE TABLE messages (
-        id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        username TEXT NOT NULL,
-        text TEXT NOT NULL,
-        type TEXT NOT NULL DEFAULT 'chat'
-    );
-
-    -- 允许匿名用户读取和插入消息
-    ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
-
-    CREATE POLICY "允许所有人读取消息"
-        ON messages FOR SELECT
-        USING (true);
-
-    CREATE POLICY "允许所有人发送消息"
-        ON messages FOR INSERT
-        WITH CHECK (true);
-
-    -- 创建索引以加速历史查询
-    CREATE INDEX idx_messages_created_at ON messages (created_at);
-    */
-</script>
+    
+        -- 允许匿名用户读取和插入消息
+        ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+    
+        CREATE POLICY "允许所有人读取消息"
+            ON messages FOR SELECT
+            USING (true);
+    
+        CREATE POLICY "允许所有人发送消息"
+            ON messages FOR INSERT
+            WITH CHECK (true);
+    
+        -- 创建索引以加速历史查询
+        CREATE INDEX idx_messages_created_at ON messages (created_at);
+        */
+    </script>
 </body>
+
 </html>
