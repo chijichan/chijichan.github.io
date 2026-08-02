@@ -103,13 +103,14 @@ END;
 $$;
 
 -- 设置 / 修改 / 清除管理员密码（存 bcrypt 哈希）
+-- 注意：Supabase 防护触发器禁止无 WHERE 的 DELETE，必须加 WHERE true
 CREATE OR REPLACE FUNCTION set_admin_password(pwd TEXT)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
-    DELETE FROM admin_settings;
+    DELETE FROM admin_settings WHERE true;
     IF pwd IS NULL OR length(pwd) < 4 THEN
         RETURN TRUE;
     END IF;
