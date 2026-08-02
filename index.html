@@ -1,958 +1,136 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ChijiChat - AI 聊天</title>
-    <!-- Supabase JS SDK -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background: #18181b;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #f4f4f5;
-        }
-
-        .chat-container {
-            width: 100%;
-            max-width: 800px;
-            height: 100vh;
-            max-height: 900px;
-            background: #18181b;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            margin: 20px;
-            border: 1px solid #27272a;
-            position: relative;
-        }
-
-        /* ========== Header ========== */
-        .chat-header {
-            background: #18181b;
-            padding: 14px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #27272a;
-            flex-shrink: 0;
-        }
-        .chat-header-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .chat-header h1 {
-            font-size: 16px;
-            font-weight: 600;
-            color: #f4f4f5;
-            letter-spacing: -0.02em;
-        }
-        .header-actions {
-            display: flex;
-            gap: 6px;
-        }
-        .header-actions button {
-            background: #27272a;
-            color: #a1a1aa;
-            border: 1px solid #3f3f46;
-            border-radius: 8px;
-            padding: 6px 10px;
-            font-size: 11px;
-            cursor: pointer;
-            transition: background 0.15s, color 0.15s;
-        }
-        .header-actions button:hover {
-            background: #3f3f46;
-            color: #f4f4f5;
-        }
-        .model-badge {
-            font-size: 11px;
-            color: #a1a1aa;
-            background: #27272a;
-            padding: 3px 10px;
-            border-radius: 100px;
-            max-width: 180px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        /* ========== Messages Area ========== */
-        .messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            background: #18181b;
-        }
-        .messages::-webkit-scrollbar { width: 4px; }
-        .messages::-webkit-scrollbar-track { background: transparent; }
-        .messages::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 100px; }
-
-        /* ========== Message Bubbles ========== */
-        .message {
-            display: flex;
-            flex-direction: column;
-            max-width: 85%;
-        }
-        .message.user { align-self: flex-end; align-items: flex-end; }
-        .message.ai { align-self: flex-start; align-items: flex-start; }
-        .message.system { align-self: center; align-items: center; max-width: 90%; }
-
-        @media (prefers-reduced-motion: no-preference) {
-            .message { animation: fadeIn 0.3s ease; }
-            @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(8px); }
-                to   { opacity: 1; transform: translateY(0); }
-            }
-        }
-
-        .message .sender {
-            font-size: 11px;
-            color: #a1a1aa;
-            margin-bottom: 3px;
-            font-weight: 500;
-            padding: 0 4px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .message.user .sender { color: #22c55e; }
-        .message.ai .sender { color: #818cf8; }
-
-        .message .bubble {
-            padding: 10px 14px;
-            border-radius: 12px;
-            font-size: 14px;
-            line-height: 1.6;
-            word-break: break-word;
-            position: relative;
-            white-space: pre-wrap;
-        }
-        .message.user .bubble {
-            background: #22c55e;
-            color: #09090b;
-            border-bottom-right-radius: 4px;
-        }
-        .message.ai .bubble {
-            background: #27272a;
-            color: #f4f4f5;
-            border-bottom-left-radius: 4px;
-        }
-        .message.system .bubble {
-            background: rgba(34, 197, 94, 0.08);
-            color: #a1a1aa;
-            font-size: 12px;
-            padding: 5px 14px;
-            border-radius: 100px;
-            border: 1px solid rgba(34, 197, 94, 0.15);
-        }
-        .message .bubble .time {
-            font-size: 10px;
-            color: rgba(255, 255, 255, 0.45);
-            margin-top: 6px;
-            text-align: right;
-        }
-        .message.user .bubble .time { color: rgba(9, 9, 11, 0.5); }
-        .message.ai .bubble .time { color: rgba(255, 255, 255, 0.3); }
-
-        .message.ai .bubble p { margin-bottom: 8px; }
-        .message.ai .bubble p:last-child { margin-bottom: 0; }
-        .message.ai .bubble code {
-            background: #18181b;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 13px;
-            font-family: "JetBrains Mono", "Fira Code", monospace;
-        }
-        .message.ai .bubble pre {
-            background: #18181b;
-            padding: 12px;
-            border-radius: 8px;
-            overflow-x: auto;
-            margin: 8px 0;
-        }
-        .message.ai .bubble pre code {
-            background: none;
-            padding: 0;
-            font-size: 13px;
-        }
-
-        /* ========== Typing Indicator ========== */
-        .typing-indicator {
-            display: none;
-            align-self: flex-start;
-            align-items: flex-start;
-            max-width: 85%;
-            animation: fadeIn 0.3s ease;
-        }
-        .typing-indicator .bubble {
-            background: #27272a;
-            padding: 14px 18px;
-            border-radius: 12px;
-            border-bottom-left-radius: 4px;
-            display: flex;
-            gap: 4px;
-            align-items: center;
-        }
-        .typing-indicator .dot {
-            width: 7px;
-            height: 7px;
-            background: #52525b;
-            border-radius: 50%;
-            animation: typingBounce 1.4s infinite ease-in-out;
-        }
-        .typing-indicator .dot:nth-child(2) { animation-delay: 0.2s; }
-        .typing-indicator .dot:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes typingBounce {
-            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-            40% { transform: scale(1); opacity: 1; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .typing-indicator .dot { animation: none; opacity: 0.5; }
-        }
-
-        /* ========== Connection Status ========== */
-        .connection-status {
-            text-align: center;
-            padding: 5px;
-            font-size: 11px;
-            flex-shrink: 0;
-            transition: background 0.3s, color 0.3s;
-        }
-        .connection-status.connected { background: rgba(34, 197, 94, 0.08); color: #22c55e; }
-        .connection-status.disconnected { background: rgba(239, 68, 68, 0.08); color: #ef4444; }
-        .connection-status.connecting { background: rgba(234, 179, 8, 0.08); color: #eab308; }
-
-        /* ========== Input Area ========== */
-        .input-area {
-            padding: 14px 20px 16px;
-            background: #18181b;
-            border-top: 1px solid #27272a;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-shrink: 0;
-        }
-        .input-area input[type="text"] {
-            flex: 1;
-            padding: 11px 16px;
-            border: 1px solid #3f3f46;
-            border-radius: 12px;
-            background: #27272a;
-            color: #f4f4f5;
-            font-size: 14px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        .input-area input[type="text"]:focus { border-color: #22c55e; }
-        .input-area input[type="text"]::placeholder { color: #52525b; }
-        .input-area button {
-            background: #22c55e;
-            color: #09090b;
-            border: none;
-            border-radius: 12px;
-            min-width: 46px;
-            height: 40px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.12s, background 0.15s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            padding: 0 14px;
-        }
-        .input-area button:hover { background: #16a34a; transform: scale(1.03); }
-        .input-area button:active { transform: scale(0.96); }
-        .input-area button:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-            transform: none;
-            background: #3f3f46;
-            color: #a1a1aa;
-        }
-
-        /* ========== Clear Button ========== */
-        .clear-btn {
-            background: none;
-            border: none;
-            color: #52525b;
-            font-size: 11px;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 6px;
-            transition: color 0.15s, background 0.15s;
-        }
-        .clear-btn:hover {
-            color: #ef4444;
-            background: rgba(239, 68, 68, 0.1);
-        }
-
-        /* ========== Settings Drawer ========== */
-        .settings-overlay {
-            display: none;
-            position: absolute;
-            inset: 0;
-            background: rgba(24, 24, 27, 0.96);
-            z-index: 20;
-            border-radius: 16px;
-            overflow-y: auto;
-        }
-        .settings-overlay.open { display: block; }
-        .settings-inner {
-            padding: 24px 28px;
-            max-width: 480px;
-            margin: 0 auto;
-        }
-        .settings-inner h2 {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            color: #f4f4f5;
-        }
-        .settings-group {
-            margin-bottom: 20px;
-        }
-        .settings-group label {
-            display: block;
-            font-size: 12px;
-            font-weight: 500;
-            color: #a1a1aa;
-            margin-bottom: 6px;
-        }
-        .settings-group input, .settings-group select {
-            width: 100%;
-            padding: 10px 14px;
-            border: 1px solid #3f3f46;
-            border-radius: 10px;
-            background: #27272a;
-            color: #f4f4f5;
-            font-size: 14px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        .settings-group input:focus, .settings-group select:focus {
-            border-color: #22c55e;
-        }
-        .settings-group .hint {
-            font-size: 11px;
-            color: #52525b;
-            margin-top: 4px;
-        }
-        .settings-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 24px;
-        }
-        .settings-actions button {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.15s, transform 0.1s;
-        }
-        .settings-actions .save-btn {
-            background: #22c55e;
-            color: #09090b;
-        }
-        .settings-actions .save-btn:hover { background: #16a34a; }
-        .settings-actions .close-btn {
-            background: #27272a;
-            color: #a1a1aa;
-            border: 1px solid #3f3f46;
-        }
-        .settings-actions .close-btn:hover { background: #3f3f46; color: #f4f4f5; }
-
-        .settings-status {
-            font-size: 12px;
-            margin-top: 12px;
-            padding: 8px 12px;
-            border-radius: 8px;
-            display: none;
-        }
-        .settings-status.success { display: block; background: rgba(34, 197, 94, 0.1); color: #22c55e; }
-        .settings-status.error { display: block; background: rgba(239, 68, 68, 0.1); color: #ef4444; }
-
-        /* ========== Empty State ========== */
-        .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            flex: 1;
-            color: #52525b;
-            text-align: center;
-            padding: 40px 20px;
-            gap: 8px;
-        }
-        .empty-state .empty-icon { font-size: 32px; margin-bottom: 4px; opacity: 0.5; }
-        .empty-state .empty-title { font-size: 15px; font-weight: 500; color: #a1a1aa; }
-        .empty-state .empty-desc { font-size: 13px; color: #52525b; max-width: 260px; line-height: 1.5; }
-
-        /* ========== Reduced Motion ========== */
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
-
-        /* ========== Responsive ========== */
-        @media (max-width: 600px) {
-            .chat-container { margin: 0; border-radius: 0; max-height: 100vh; height: 100vh; }
-            .settings-overlay { border-radius: 0; }
-            .chat-header { padding: 12px 14px; }
-            .messages { padding: 14px; }
-            .input-area { padding: 12px 14px 14px; }
-            .message { max-width: 90%; }
-            .settings-inner { padding: 20px 16px; }
-        }
-    </style>
+    <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
 
-<div class="chat-container" id="app">
-    <!-- Settings Drawer -->
-    <div class="settings-overlay" id="settingsOverlay">
-        <div class="settings-inner">
-            <h2>AI 设置</h2>
+    <div class="chat-container" id="app">
 
-            <div class="settings-group">
-                <label>API 地址</label>
-                <input type="text" id="settingsEndpoint" placeholder="https://api.openai.com/v1" />
-                <div class="hint">兼容 OpenAI 格式的 API 端点</div>
+        <!-- 登录层 -->
+        <div class="login-overlay" id="loginOverlay">
+            <div class="login-box">
+                <h2>ChijiChat</h2>
+                <p>输入昵称开始 AI 对话</p>
+                <input type="text" id="usernameInput" placeholder="你的昵称..." maxlength="20" autocomplete="off" />
+                <button class="login-btn" id="loginBtn">开始聊天</button>
             </div>
+        </div>
 
-            <div class="settings-group">
-                <label>API Key</label>
-                <input type="password" id="settingsKey" placeholder="sk-..." />
-                <div class="hint">存储在 Supabase 中，仅你自己可见</div>
+        <!-- 设置密码验证层 -->
+        <div class="settings-lock-overlay" id="settingsLockOverlay">
+            <div class="login-box">
+                <h2>管理员验证</h2>
+                <p>输入管理员密码以打开设置</p>
+                <input type="password" id="settingsLockPwd" placeholder="管理员密码..." autocomplete="off" />
+                <button class="login-btn" id="settingsLockBtn">解锁</button>
+                <button class="login-btn ghost" id="settingsLockCancel">取消</button>
+                <div class="settings-status" id="settingsLockStatus"></div>
             </div>
+        </div>
 
-            <div class="settings-group">
-                <label>模型</label>
-                <input type="text" id="settingsModel" placeholder="gpt-4o-mini" />
-                <div class="hint">模型名称，如 gpt-4o-mini, claude-3-haiku, deepseek-chat</div>
+        <!-- 设置面板 -->
+        <div class="settings-overlay" id="settingsOverlay">
+            <div class="settings-inner">
+                <h2>AI 设置</h2>
+
+                <div class="settings-group">
+                    <label>API 地址</label>
+                    <input type="text" id="settingsEndpoint" placeholder="https://api.openai.com/v1" autocomplete="off" />
+                    <div class="hint">兼容 OpenAI 格式的 API 端点</div>
+                </div>
+
+                <div class="settings-group">
+                    <label>API Key</label>
+                    <input type="password" id="settingsKey" placeholder="sk-..." autocomplete="off" />
+                    <div class="hint">默认仅保存在此浏览器（localStorage），不会上传</div>
+                </div>
+
+                <div class="settings-group">
+                    <label>模型</label>
+                    <input type="text" id="settingsModel" placeholder="gpt-4o-mini" autocomplete="off" />
+                    <div class="hint">模型名称，如 gpt-4o-mini, claude-3-haiku, deepseek-chat</div>
+                </div>
+
+                <div class="settings-group">
+                    <label>系统提示词</label>
+                    <textarea id="settingsPrompt" placeholder="你是一个有用的助手" rows="3"></textarea>
+                    <div class="hint">AI 的角色设定</div>
+                </div>
+
+                <div class="settings-group checkbox-group">
+                    <input type="checkbox" id="settingsSync" />
+                    <label class="checkbox-label" for="settingsSync">
+                        同步到聊天室（共享给所有访客使用）
+                        <div class="hint" style="margin-top:4px;">注意：勾选后 API Key 将上传到公共数据库，所有人可见，请谨慎使用</div>
+                    </label>
+                </div>
+
+                <div class="settings-actions">
+                    <button class="save-btn" id="settingsSaveBtn">保存</button>
+                    <button class="close-btn" id="settingsCloseBtn">取消</button>
+                </div>
+
+                <div class="settings-status" id="settingsStatus"></div>
+
+                <!-- 管理员密码 -->
+                <div class="settings-group" style="margin-top:24px; padding-top:20px; border-top:1px solid #27272a;">
+                    <label>管理员密码</label>
+                    <input type="password" id="adminPwdInput" placeholder="设置或修改管理员密码" autocomplete="off" />
+                    <div class="hint">保存后，打开设置需要输入该密码验证。留空并点击"保存密码"可清除密码。</div>
+                    <button class="admin-save-btn" id="adminPwdSaveBtn" style="margin-top:8px;">保存密码</button>
+                </div>
             </div>
+        </div>
 
-            <div class="settings-group">
-                <label>系统提示词</label>
-                <input type="text" id="settingsPrompt" placeholder="你是一个有用的助手" />
-                <div class="hint">AI 的角色设定</div>
+        <!-- 顶栏 -->
+        <div class="chat-header">
+            <div class="chat-header-left">
+                <h1>ChijiChat</h1>
+                <span class="model-badge" id="modelBadge">未配置</span>
             </div>
-
-            <div class="settings-actions">
-                <button class="save-btn" id="settingsSaveBtn">保存</button>
-                <button class="close-btn" id="settingsCloseBtn">取消</button>
+            <div class="header-actions">
+                <button id="clearBtn">清除对话</button>
+                <button id="settingsBtn">设置</button>
             </div>
+        </div>
 
-            <div class="settings-status" id="settingsStatus"></div>
+        <!-- 连接状态 -->
+        <div class="connection-status connecting" id="connectionStatus">连接中...</div>
+
+        <!-- 消息区 -->
+        <div class="messages" id="messages">
+            <div class="empty-state" id="emptyState">
+                <div class="empty-icon">~</div>
+                <div class="empty-title">开始 AI 对话</div>
+                <div class="empty-desc">发送一条消息，AI 会自动回复。先在设置中配置 API 地址和密钥。</div>
+            </div>
+        </div>
+
+        <!-- 输入指示器 -->
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="bubble">
+                <span class="typing-pulse"></span>
+                <span class="typing-text">AI 正在输入</span>
+            </div>
+        </div>
+
+        <!-- 输入区 -->
+        <div class="input-area">
+            <input type="text" id="messageInput" placeholder="给 AI 发送消息..." maxlength="2000" disabled autocomplete="off" />
+            <button id="sendBtn" disabled>发送</button>
         </div>
     </div>
 
-    <!-- Login Overlay -->
-    <div class="login-overlay" id="loginOverlay">
-        <div class="login-box">
-            <h2>ChijiChat</h2>
-            <p>输入昵称开始 AI 对话</p>
-            <input type="text" id="usernameInput" placeholder="你的昵称..." maxlength="20" autofocus />
-            <button class="login-btn" id="loginBtn">开始聊天</button>
-        </div>
-    </div>
-
-    <!-- Header -->
-    <div class="chat-header">
-        <div class="chat-header-left">
-            <h1>ChijiChat</h1>
-            <span class="model-badge" id="modelBadge">未配置</span>
-        </div>
-        <div class="header-actions">
-            <button id="clearBtn">清除对话</button>
-            <button id="settingsBtn">设置</button>
-        </div>
-    </div>
-
-    <!-- Connection Status -->
-    <div class="connection-status connecting" id="connectionStatus">连接中...</div>
-
-    <!-- Messages -->
-    <div class="messages" id="messages">
-        <div class="empty-state" id="emptyState">
-            <div class="empty-icon">~</div>
-            <div class="empty-title">开始 AI 对话</div>
-            <div class="empty-desc">发送一条消息，AI 会自动回复。先在设置中配置 API 地址和密钥。</div>
-        </div>
-    </div>
-
-    <!-- Typing Indicator -->
-    <div class="typing-indicator" id="typingIndicator">
-        <div class="sender">AI 正在输入</div>
-        <div class="bubble">
-            <span class="dot"></span>
-            <span class="dot"></span>
-            <span class="dot"></span>
-        </div>
-    </div>
-
-    <!-- Input Area -->
-    <div class="input-area">
-        <input type="text" id="messageInput" placeholder="给 AI 发送消息..." disabled />
-        <button id="sendBtn" disabled>发送</button>
-    </div>
-</div>
-
-<script>
-    // ====================================================================
-    // ChijiChat - AI Chat with Supabase
-    // 1. Create Supabase project
-    // 2. Run SQL below in SQL Editor
-    // 3. Set SUPABASE_URL and SUPABASE_ANON_KEY
-    // ====================================================================
-
-    const SUPABASE_URL = 'https://vmhgtscgmidoctmagyup.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_XoICZcNrmikaX2QQemfGHg_ECdSh38n';
-
-    const { createClient } = supabase;
-    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        realtime: { params: { eventsPerSecond: 10 } },
-    });
-
-    // ========== State ==========
-    let username = '';
-    let isSubscribed = false;
-    let isAiResponding = false;
-
-    // ========== DOM ==========
-    const loginOverlay      = document.getElementById('loginOverlay');
-    const usernameInput     = document.getElementById('usernameInput');
-    const loginBtn          = document.getElementById('loginBtn');
-    const messagesEl        = document.getElementById('messages');
-    const emptyState        = document.getElementById('emptyState');
-    const messageInput      = document.getElementById('messageInput');
-    const sendBtn           = document.getElementById('sendBtn');
-    const connectionStatus  = document.getElementById('connectionStatus');
-    const settingsOverlay   = document.getElementById('settingsOverlay');
-    const settingsBtn       = document.getElementById('settingsBtn');
-    const settingsCloseBtn  = document.getElementById('settingsCloseBtn');
-    const settingsSaveBtn   = document.getElementById('settingsSaveBtn');
-    const settingsEndpoint  = document.getElementById('settingsEndpoint');
-    const settingsKey       = document.getElementById('settingsKey');
-    const settingsModel     = document.getElementById('settingsModel');
-    const settingsPrompt    = document.getElementById('settingsPrompt');
-    const settingsStatus    = document.getElementById('settingsStatus');
-    const modelBadge        = document.getElementById('modelBadge');
-    const typingIndicator   = document.getElementById('typingIndicator');
-    const clearBtn          = document.getElementById('clearBtn');
-
-    // ========== Login ==========
-    loginBtn.addEventListener('click', enterChat);
-    usernameInput.addEventListener('keydown', e => { if (e.key === 'Enter') enterChat(); });
-
-    function enterChat() {
-        const name = usernameInput.value.trim();
-        if (!name) return;
-        username = name;
-        loginOverlay.style.display = 'none';
-        initChat();
-    }
-
-    // ========== Init ==========
-    async function initChat() {
-        setStatus('connecting', '连接中...');
-        await loadAiConfig();
-        await loadHistory();
-        subscribeMessages();
-        setStatus('connected', '已连接');
-        messageInput.disabled = false;
-        sendBtn.disabled = false;
-        messageInput.focus();
-    }
-
-    // ========== AI Config ==========
-    async function loadAiConfig() {
-        try {
-            const { data, error } = await supabaseClient
-                .from('ai_config')
-                .select('*')
-                .order('created_at', { ascending: false })
-                .limit(1);
-
-            if (error) {
-                console.log('AI config not found, using defaults');
-                return;
-            }
-
-            if (data && data.length > 0) {
-                const cfg = data[0];
-                settingsEndpoint.value = cfg.api_endpoint || '';
-                settingsKey.value = cfg.api_key || '';
-                settingsModel.value = cfg.model || '';
-                settingsPrompt.value = cfg.system_prompt || '';
-                updateModelBadge();
-            }
-        } catch (err) {
-            console.log('Failed to load AI config:', err);
-        }
-    }
-
-    function updateModelBadge() {
-        const model = settingsModel.value.trim();
-        modelBadge.textContent = model || '未配置';
-    }
-
-    // ========== Settings Drawer ==========
-    settingsBtn.addEventListener('click', () => {
-        settingsOverlay.classList.add('open');
-        settingsStatus.style.display = 'none';
-    });
-
-    settingsCloseBtn.addEventListener('click', () => {
-        settingsOverlay.classList.remove('open');
-    });
-
-    settingsSaveBtn.addEventListener('click', async () => {
-        const endpoint = settingsEndpoint.value.trim();
-        const key = settingsKey.value.trim();
-        const model = settingsModel.value.trim();
-        const prompt = settingsPrompt.value.trim();
-
-        if (!endpoint || !key || !model) {
-            showSettingsStatus('请填写 API 地址、Key 和模型', 'error');
-            return;
-        }
-
-        try {
-            const { error } = await supabaseClient
-                .from('ai_config')
-                .insert({
-                    api_endpoint: endpoint,
-                    api_key: key,
-                    model: model,
-                    system_prompt: prompt || '你是一个有用的助手',
-                });
-
-            if (error) {
-                showSettingsStatus('保存失败: ' + error.message, 'error');
-                return;
-            }
-
-            updateModelBadge();
-            showSettingsStatus('保存成功', 'success');
-            setTimeout(() => settingsOverlay.classList.remove('open'), 800);
-        } catch (err) {
-            showSettingsStatus('保存失败: ' + err.message, 'error');
-        }
-    });
-
-    function showSettingsStatus(text, type) {
-        settingsStatus.textContent = text;
-        settingsStatus.className = 'settings-status ' + type;
-        settingsStatus.style.display = 'block';
-    }
-
-    // ========== Load History ==========
-    async function loadHistory() {
-        try {
-            const { data, error } = await supabaseClient
-                .from('messages')
-                .select('*')
-                .order('created_at', { ascending: true })
-                .limit(100);
-
-            if (error) {
-                console.error('Failed to load history:', error);
-                return;
-            }
-
-            if (data && data.length > 0) {
-                if (emptyState) emptyState.style.display = 'none';
-                data.forEach(msg => {
-                    if (msg.type === 'system') {
-                        appendSystemMessage(msg.text);
-                    } else {
-                        appendMessage(msg.username, msg.text, msg.created_at, msg.type === 'user' ? true : false);
-                    }
-                });
-                scrollToBottom();
-            }
-        } catch (err) {
-            console.error('Failed to load history:', err);
-        }
-    }
-
-    // ========== Realtime Subscribe ==========
-    function subscribeMessages() {
-        if (isSubscribed) return;
-        isSubscribed = true;
-
-        supabaseClient
-            .channel('messages-channel')
-            .on('postgres_changes',
-                { event: 'INSERT', schema: 'public', table: 'messages' },
-                (payload) => {
-                    const msg = payload.new;
-                    // Skip if this is the user's own message (already shown locally)
-                    if (msg.username === username && msg.type === 'user') return;
-                    if (emptyState) emptyState.style.display = 'none';
-                    if (msg.type === 'system') {
-                        appendSystemMessage(msg.text);
-                    } else {
-                        appendMessage(msg.username, msg.text, msg.created_at, msg.type === 'user');
-                    }
-                }
-            )
-            .subscribe((status) => {
-                if (status === 'SUBSCRIBED') {
-                    console.log('Subscribed to messages');
-                } else if (status === 'CHANNEL_ERROR') {
-                    setStatus('disconnected', '实时连接失败');
-                }
-            });
-    }
-
-    // ========== Send Message ==========
-    sendBtn.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter') sendMessage();
-    });
-
-    async function sendMessage() {
-        const text = messageInput.value.trim();
-        if (!text || text.length > 2000 || isAiResponding) return;
-
-        // Disable input while processing
-        setInputEnabled(false);
-
-        try {
-            // 1. Save user message
-            const { error: userErr } = await supabaseClient
-                .from('messages')
-                .insert({ username: username, text: text, type: 'user' });
-
-            if (userErr) {
-                appendSystemMessage('发送失败: ' + userErr.message);
-                setInputEnabled(true);
-                return;
-            }
-
-            // 2. Show user message locally
-            if (emptyState) emptyState.style.display = 'none';
-            appendMessage(username, text, new Date().toISOString(), true);
-            messageInput.value = '';
-
-            // 3. Show typing indicator
-            typingIndicator.style.display = 'flex';
-            scrollToBottom();
-
-            // 4. Get AI config
-            const { data: configs } = await supabaseClient
-                .from('ai_config')
-                .select('*')
-                .order('created_at', { ascending: false })
-                .limit(1);
-
-            if (!configs || configs.length === 0) {
-                typingIndicator.style.display = 'none';
-                appendSystemMessage('请先在设置中配置 AI 接口');
-                setInputEnabled(true);
-                return;
-            }
-
-            const cfg = configs[0];
-
-            // 5. Build conversation context (last 20 messages)
-            const { data: recent } = await supabaseClient
-                .from('messages')
-                .select('*')
-                .order('created_at', { ascending: true })
-                .limit(20);
-
-            const messages = [];
-            if (cfg.system_prompt) {
-                messages.push({ role: 'system', content: cfg.system_prompt });
-            }
-            if (recent) {
-                recent.forEach(m => {
-                    if (m.type === 'user') {
-                        messages.push({ role: 'user', content: m.text });
-                    } else if (m.type === 'ai') {
-                        messages.push({ role: 'assistant', content: m.text });
-                    }
-                });
-            }
-
-            // 6. Call AI API
-            const response = await fetch(cfg.api_endpoint + '/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + cfg.api_key,
-                },
-                body: JSON.stringify({
-                    model: cfg.model,
-                    messages: messages,
-                    max_tokens: 2048,
-                }),
-            });
-
-            typingIndicator.style.display = 'none';
-
-            if (!response.ok) {
-                const errText = await response.text();
-                appendSystemMessage('AI 响应错误 (' + response.status + '): ' + errText.slice(0, 200));
-                setInputEnabled(true);
-                return;
-            }
-
-            const result = await response.json();
-            const aiText = result.choices && result.choices[0] && result.choices[0].message
-                ? result.choices[0].message.content
-                : 'AI 返回了空响应';
-
-            // 7. Save AI response
-            const { error: aiErr } = await supabaseClient
-                .from('messages')
-                .insert({ username: 'AI', text: aiText, type: 'ai' });
-
-            if (aiErr) {
-                console.error('Failed to save AI response:', aiErr);
-            }
-
-            // 8. Show AI response locally
-            appendMessage('AI', aiText, new Date().toISOString(), false);
-
-        } catch (err) {
-            typingIndicator.style.display = 'none';
-            appendSystemMessage('请求失败: ' + err.message);
-        }
-
-        setInputEnabled(true);
-        messageInput.focus();
-    }
-
-    function setInputEnabled(enabled) {
-        isAiResponding = !enabled;
-        messageInput.disabled = !enabled;
-        sendBtn.disabled = !enabled;
-    }
-
-    // ========== Clear Conversation ==========
-    clearBtn.addEventListener('click', async () => {
-        if (!confirm('确定清除所有对话记录？')) return;
-        try {
-            await supabaseClient
-                .from('messages')
-                .delete()
-                .neq('id', 0);
-            messagesEl.innerHTML = '';
-            if (emptyState) {
-                emptyState.style.display = 'flex';
-                messagesEl.appendChild(emptyState);
-            }
-        } catch (err) {
-            console.error('Failed to clear messages:', err);
-        }
-    });
-
-    // ========== UI Helpers ==========
-    function setStatus(type, text) {
-        connectionStatus.className = 'connection-status ' + type;
-        connectionStatus.textContent = text;
-    }
-
-    function appendMessage(sender, text, time, isUser) {
-        const div = document.createElement('div');
-        div.className = 'message ' + (isUser ? 'user' : 'ai');
-        const timeStr = time
-            ? new Date(time).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-            : '';
-        const label = isUser ? sender : 'AI';
-        div.innerHTML =
-            '<div class="sender">' + escapeHtml(label) + '</div>' +
-            '<div class="bubble">' +
-                formatAiText(escapeHtml(text)) +
-                '<div class="time">' + timeStr + '</div>' +
-            '</div>';
-        messagesEl.appendChild(div);
-        scrollToBottom();
-    }
-
-    function appendSystemMessage(text) {
-        const div = document.createElement('div');
-        div.className = 'message system';
-        div.innerHTML = '<div class="bubble">' + escapeHtml(text) + '</div>';
-        messagesEl.appendChild(div);
-        scrollToBottom();
-    }
-
-    function formatAiText(text) {
-        // Convert line breaks to <br> for display
-        return text.replace(/\n/g, '<br>');
-    }
-
-    function scrollToBottom() {
-        requestAnimationFrame(() => {
-            messagesEl.scrollTop = messagesEl.scrollHeight;
-        });
-    }
-
-    function escapeHtml(str) {
-        var d = document.createElement('div');
-        d.textContent = str;
-        return d.innerHTML;
-    }
-
-    // ====================================================================
-    // Supabase SQL - 在 SQL Editor 运行:
-    // ====================================================================
-    /*
-    -- 消息表 (已有则跳过)
-    CREATE TABLE IF NOT EXISTS messages (
-        id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        username TEXT NOT NULL,
-        text TEXT NOT NULL,
-        type TEXT NOT NULL DEFAULT 'user'
-    );
-
-    -- AI 配置表
-    CREATE TABLE IF NOT EXISTS ai_config (
-        id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        api_endpoint TEXT NOT NULL,
-        api_key TEXT NOT NULL,
-        model TEXT NOT NULL,
-        system_prompt TEXT DEFAULT ''
-    );
-
-    -- RLS
-    ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
-    ALTER TABLE ai_config ENABLE ROW LEVEL SECURITY;
-
-    CREATE POLICY "允许所有人读取消息" ON messages FOR SELECT USING (true);
-    CREATE POLICY "允许所有人发送消息" ON messages FOR INSERT WITH CHECK (true);
-    CREATE POLICY "允许所有人删除消息" ON messages FOR DELETE USING (true);
-
-    CREATE POLICY "允许所有人读取配置" ON ai_config FOR SELECT USING (true);
-    CREATE POLICY "允许所有人写入配置" ON ai_config FOR INSERT WITH CHECK (true);
-
-    CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages (created_at);
-    */
-</script>
+    <!-- Supabase JS SDK -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- 应用逻辑 -->
+    <script src="app.js"></script>
 </body>
+
 </html>
