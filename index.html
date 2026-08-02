@@ -529,6 +529,9 @@
                 return;
             }
 
+            // 立即本地追加消息，确保自己立即看到
+            if (emptyState) emptyState.style.display = 'none';
+            appendMessage(username, text, new Date().toISOString(), true);
             messageInput.value = '';
             messageInput.focus();
         } catch (err) {
